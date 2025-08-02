@@ -54,11 +54,13 @@ function drawScene() {
     })
     .on("mouseover", (evt, d) => {
       if (params.scene === 3) {
+        const originLabel = originMap[d.origin] || `Unknown (${d.origin})`;
+        const nameLabel = d.name || "Unnamed";
         g.append("text")
           .attr("id", "tt")
           .attr("x", x(d.weight) + 10)
           .attr("y", y(d.mpg) - 10)
-          .text(`${d.name}: ${d.mpg} mpg (${originMap[d.origin]} origin)`);
+          .text(`${nameLabel}: ${d.mpg} mpg (${originLabel} origin)`);
       }
     })
     .on("mouseout", () => g.select("#tt").remove());
@@ -103,5 +105,7 @@ function drawScene() {
       .append("option")
       .attr("value", d => d)
       .text(d => d ? originMap[d] : "All");
+
+    sel.property("value", params.filterOrigin || `Unknown (${d})` : "All"); // set selected option to current value
   }
 }
