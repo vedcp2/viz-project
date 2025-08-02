@@ -1,6 +1,3 @@
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-
 const url = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/mpg.csv";
 let data;
 let currentScene = 0;
@@ -54,6 +51,10 @@ d3.csv(url, d => ({
 function renderScene(sceneIndex) {
   console.log("Rendering scene:", sceneIndex, "Data available:", !!data);
   d3.select("#vis").html(""); // Clear previous scene
+  
+  // Show/hide exploration controls based on scene
+  const explorationControls = document.getElementById("explorationControls");
+  explorationControls.style.display = sceneIndex === 2 ? "block" : "none";
 
   if (!data) {
     console.error("No data available for rendering");
@@ -64,35 +65,31 @@ function renderScene(sceneIndex) {
   else if (sceneIndex === 1) renderScene2();
   else if (sceneIndex === 2) renderScene3();
 
-  // Update button states with null checks
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  
-  if (prevBtn) prevBtn.disabled = sceneIndex === 0;
-  if (nextBtn) nextBtn.disabled = sceneIndex === 2;
+  document.getElementById("prevBtn").disabled = sceneIndex === 0;
+  document.getElementById("nextBtn").disabled = sceneIndex === 2;
 }
 
-// Navigation event listeners with null checks
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
+// Navigation event listeners
+document.getElementById("prevBtn").addEventListener("click", () => {
+  if (currentScene > 0) {
+    currentScene--;
+    renderScene(currentScene);
+  }
+});
 
-if (prevBtn) {
-  prevBtn.addEventListener("click", () => {
-    if (currentScene > 0) {
-      currentScene--;
-      renderScene(currentScene);
-    }
-  });
-}
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if (currentScene < 2) {
+    currentScene++;
+    renderScene(currentScene);
+  }
+});
 
-if (nextBtn) {
-  nextBtn.addEventListener("click", () => {
-    if (currentScene < 2) {
-      currentScene++;
-      renderScene(currentScene);
-    }
-  });
-}
+// Exploration dropdown event listener
+document.getElementById("groupBySelect").addEventListener("change", () => {
+  if (currentScene === 2) {
+    renderScene3();
+  }
+});
 
 // Scene 1: Bar chart of average MPG by origin (1970-1974)
 function renderScene1() {
@@ -322,7 +319,7 @@ function renderScene2() {
     .text(scenes[1].annotation);
 }
 
-// Scene 3: Scatter plot with hover exploration
+// Scene 3: Scatter plot with exploration
 function renderScene3() {
   console.log("Rendering Scene 3");
   const svg = d3.select("#vis")
@@ -381,7 +378,7 @@ function renderScene3() {
     .style("text-anchor", "middle")
     .text("MPG");
 
-  // Scatter points with detailed hover information
+  // Scatter points
   g.selectAll("circle")
     .data(filtered)
     .enter()
@@ -393,13 +390,7 @@ function renderScene3() {
     .attr("fill", d => colorScale(d.origin))
     .attr("opacity", 0.7)
     .on("mouseover", function(d) {
-      showTooltip(`<strong>${d.name}</strong><br/>
-        MPG: ${d.mpg}<br/>
-        Horsepower: ${d.horsepower}<br/>
-        Origin: ${d.origin.toUpperCase()}<br/>
-        Cylinders: ${d.cylinders}<br/>
-        Weight: ${d.weight} lbs<br/>
-        Year: ${d.model_year + 1900}`);
+      showTooltip(`${d.name}<br/>MPG: ${d.mpg}<br/>HP: ${d.horsepower}<br/>Origin: ${d.origin}`);
     })
     .on("mouseout", hideTooltip);
 
@@ -429,23 +420,30 @@ function renderScene3() {
     .attr("y", -20)
     .attr("class", "scene-annotation")
     .text(scenes[2].annotation);
+
+  // Handle exploration dropdown
+  const groupBy = document.getElementById("groupBySelect").value;
+  if (groupBy !== "origin") {
+    updateExploration(groupBy, g, width, height);
+  }
+}
+
+// Exploration feature for Scene 3
+function updateExploration(groupBy, g, width, height) {
+  // This function can be extended to show different visualizations
+  // based on the selected groupBy option
+  console.log("Exploring by:", groupBy);
 }
 
 // Tooltip functions
 function showTooltip(content) {
-  if (tooltip) {
-    tooltip.style("opacity", 1)
-      .html(content)
-      .style("left", (d3.event.pageX + 10) + "px")
-      .style("top", (d3.event.pageY - 10) + "px");
-  }
+  tooltip.style("opacity", 1)
+    .html(content)
+    .style("left", (d3.event.pageX + 10) + "px")
+    .style("top", (d3.event.pageY - 10) + "px");
 }
 
 function hideTooltip() {
-  if (tooltip) {
-    tooltip.style("opacity", 0);
-  }
+  tooltip.style("opacity", 0);
 }
-
-}); // End of DOMContentLoaded
 

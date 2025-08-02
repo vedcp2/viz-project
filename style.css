@@ -69,6 +69,26 @@ button:disabled {
   transition: opacity 0.3s;
 }
 
+.exploration-controls {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.exploration-controls label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.exploration-controls select {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
 .dot {
   transition: all 0.3s ease;
 }
