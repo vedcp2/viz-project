@@ -4,7 +4,7 @@ let params = { scene: 1, filterOrigin: null };
 function init() {
   d3.csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv", d3.autoType)
     .then(raw => {
-      data = raw.filter(d => d.mpg && d.weight && d.cylinders && d.origin);
+      data = raw.filter(d => d["mpg"] && d.weight && d.cylinders && d["origin"]);
       drawScene();
       setupControls();
     });
@@ -27,20 +27,20 @@ function drawScene() {
   const margin = {top:40,left:60,right:20,bottom:60}, w=400,h=300;
 
   const x = d3.scaleLinear().domain(d3.extent(data, d=>d.weight)).range([0, w]);
-  const y = d3.scaleLinear().domain(d3.extent(data, d=>d.mpg)).range([h, 0]);
+  const y = d3.scaleLinear().domain(d3.extent(data, d=>d["mpg"])).range([h, 0]);
 
   const g = svg.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
 
   const ds = data.filter(d => {
     if(params.scene===2) return d.cylinders<=4 || d.weight<3000;
-    if(params.scene===3 && params.filterOrigin) return d.origin===params.filterOrigin;
+    if(params.scene===3 && params.filterOrigin) return d["origin"]===params.filterOrigin;
     return true;
   });
 
   g.selectAll("circle")
     .data(ds).enter().append("circle")
     .attr("cx", d=>x(d.weight))
-    .attr("cy", d=>y(d.mpg))
+    .attr("cy", d=>y(d["mpg"]))
     .attr("r", d=>2 + d.cylinders)
     .attr("fill", d=>{
       if(params.scene===2 && (d.cylinders<=4 || d.weight<3000)) return "orange";
@@ -51,8 +51,8 @@ function drawScene() {
         const tip = g.append("text")
           .attr("id","tt")
           .attr("x", x(d.weight)+10)
-          .attr("y", y(d.mpg)-10)
-          .text(`${d.name}: ${d.mpg} mpg`);
+          .attr("y", y(d["mpg"])-10)
+          .text(`${d["name"]}: ${d["mpg"]} mpg`);
       }
     })
     .on("mouseout", ()=> g.select("#tt").remove());
@@ -81,7 +81,7 @@ function drawScene() {
       .text("Explore by Origin")
       .attr("font-weight","bold");
 
-    const origins = Array.from(new Set(data.map(d=>d.origin)));
+    const origins = Array.from(new Set(data.map(d=>d["origin"])));
     const sel = d3.select("#controls")
       .html("Origin filter: ")
       .append("select")
