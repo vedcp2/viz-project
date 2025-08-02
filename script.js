@@ -31,18 +31,35 @@ d3.csv(url, d => ({
   origin: d.origin,
   name: d.name
 })).then(loaded => {
+  console.log("Data loaded successfully:", loaded.length, "rows");
   data = loaded.filter(d => !isNaN(d.mpg) && !isNaN(d.horsepower) && d.horsepower > 0);
+  console.log("Filtered data:", data.length, "rows");
+  console.log("Sample data:", data.slice(0, 3));
   tooltip = d3.select("#tooltip");
   renderScene(currentScene);
+}).catch(error => {
+  console.error("Error loading data:", error);
+  // Fallback: show error message
+  d3.select("#vis").append("div")
+    .style("color", "red")
+    .style("font-size", "16px")
+    .style("margin", "20px")
+    .text("Error loading data. Please check your internet connection.");
 });
 
 // Scene rendering logic
 function renderScene(sceneIndex) {
+  console.log("Rendering scene:", sceneIndex, "Data available:", !!data);
   d3.select("#vis").html(""); // Clear previous scene
   
   // Show/hide exploration controls based on scene
   const explorationControls = document.getElementById("explorationControls");
   explorationControls.style.display = sceneIndex === 2 ? "block" : "none";
+
+  if (!data) {
+    console.error("No data available for rendering");
+    return;
+  }
 
   if (sceneIndex === 0) renderScene1();
   else if (sceneIndex === 1) renderScene2();
@@ -76,6 +93,7 @@ document.getElementById("groupBySelect").addEventListener("change", () => {
 
 // Scene 1: Bar chart of average MPG by origin (1970-1974)
 function renderScene1() {
+  console.log("Rendering Scene 1");
   const svg = d3.select("#vis")
     .append("svg")
     .attr("width", 800)
@@ -97,6 +115,7 @@ function renderScene1() {
     .text(scenes[0].title);
 
   const filtered = data.filter(d => d.model_year >= 70 && d.model_year <= 74);
+  console.log("Scene 1 filtered data:", filtered.length, "rows");
 
   // Aggregate MPG by origin
   const avgByOrigin = d3.rollup(
@@ -106,6 +125,7 @@ function renderScene1() {
   );
 
   const entries = Array.from(avgByOrigin, ([origin, mpg]) => ({ origin, mpg }));
+  console.log("Scene 1 aggregated data:", entries);
 
   const x = d3.scaleBand()
     .domain(entries.map(d => d.origin))
@@ -180,6 +200,7 @@ function renderScene1() {
 
 // Scene 2: Line chart showing MPG over time (1970-1982)
 function renderScene2() {
+  console.log("Rendering Scene 2");
   const svg = d3.select("#vis")
     .append("svg")
     .attr("width", 800)
@@ -202,6 +223,8 @@ function renderScene2() {
 
   // Filter and aggregate data by year
   const filtered = data.filter(d => d.model_year >= 70 && d.model_year <= 82);
+  console.log("Scene 2 filtered data:", filtered.length, "rows");
+  
   const avgByYear = d3.rollup(
     filtered,
     v => d3.mean(v, d => d.mpg),
@@ -212,6 +235,8 @@ function renderScene2() {
     year: year + 1900, 
     mpg 
   })).sort((a, b) => a.year - b.year);
+  
+  console.log("Scene 2 line data:", lineData);
 
   const x = d3.scaleLinear()
     .domain(d3.extent(lineData, d => d.year))
@@ -297,6 +322,7 @@ function renderScene2() {
 
 // Scene 3: Scatter plot with exploration
 function renderScene3() {
+  console.log("Rendering Scene 3");
   const svg = d3.select("#vis")
     .append("svg")
     .attr("width", 800)
@@ -318,6 +344,7 @@ function renderScene3() {
     .text(scenes[2].title);
 
   const filtered = data.filter(d => !isNaN(d.horsepower) && d.horsepower > 0);
+  console.log("Scene 3 filtered data:", filtered.length, "rows");
 
   const x = d3.scaleLinear()
     .domain([0, d3.max(filtered, d => d.horsepower) + 20])
