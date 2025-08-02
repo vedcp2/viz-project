@@ -8,6 +8,17 @@
 </head>
 <body>
   <h1>How Car Efficiency Changed Over Time</h1>
+  
+  <div class="exploration-controls" id="explorationControls" style="display: none;">
+    <label for="groupBySelect">Explore MPG by:</label>
+    <select id="groupBySelect">
+      <option value="cylinders">Number of Cylinders</option>
+      <option value="weight">Weight Category</option>
+      <option value="model_year">Model Year</option>
+      <option value="origin">Origin</option>
+    </select>
+  </div>
+  
   <div id="vis"></div>
   
   <div class="nav-buttons">
@@ -15,6 +26,7 @@
     <button id="nextBtn">Next</button>
   </div>
 
+  <div class="tooltip" id="tooltip"></div>
   <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,122 @@
+body {
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  margin: 20px;
+  background-color: #f5f5f5;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 30px;
+}
+
+#vis {
+  margin: auto;
+  width: 800px;
+  height: 500px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-buttons {
+  margin-top: 20px;
+}
+
+button {
+  padding: 12px 24px;
+  font-size: 16px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.scene-annotation {
+  font-size: 14px;
+  font-weight: bold;
+  fill: #d62728;
+  text-anchor: middle;
+}
+
+.axis-label {
+  font-size: 12px;
+  fill: #333;
+}
+
+.tooltip {
+  position: absolute;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  font-size: 12px;
+  transition: opacity 0.3s;
+}
+
+.exploration-controls {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.exploration-controls label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.exploration-controls select {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.dot {
+  transition: all 0.3s ease;
+}
+
+.dot:hover {
+  stroke: #333;
+  stroke-width: 2px;
+}
+
+.line {
+  fill: none;
+  stroke-width: 3px;
+}
+
+.bar {
+  transition: all 0.3s ease;
+}
+
+.bar:hover {
+  opacity: 0.8;
+}
+
+.scene-title {
+  font-size: 18px;
+  font-weight: bold;
+  fill: #333;
+}
+
+.legend {
+  font-size: 12px;
+}
