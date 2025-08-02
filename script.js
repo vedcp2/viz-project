@@ -1,3 +1,6 @@
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+
 const url = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/mpg.csv";
 let data;
 let currentScene = 0;
@@ -61,24 +64,35 @@ function renderScene(sceneIndex) {
   else if (sceneIndex === 1) renderScene2();
   else if (sceneIndex === 2) renderScene3();
 
-  document.getElementById("prevBtn").disabled = sceneIndex === 0;
-  document.getElementById("nextBtn").disabled = sceneIndex === 2;
+  // Update button states with null checks
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  
+  if (prevBtn) prevBtn.disabled = sceneIndex === 0;
+  if (nextBtn) nextBtn.disabled = sceneIndex === 2;
 }
 
-// Navigation event listeners
-document.getElementById("prevBtn").addEventListener("click", () => {
-  if (currentScene > 0) {
-    currentScene--;
-    renderScene(currentScene);
-  }
-});
+// Navigation event listeners with null checks
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
 
-document.getElementById("nextBtn").addEventListener("click", () => {
-  if (currentScene < 2) {
-    currentScene++;
-    renderScene(currentScene);
-  }
-});
+if (prevBtn) {
+  prevBtn.addEventListener("click", () => {
+    if (currentScene > 0) {
+      currentScene--;
+      renderScene(currentScene);
+    }
+  });
+}
+
+if (nextBtn) {
+  nextBtn.addEventListener("click", () => {
+    if (currentScene < 2) {
+      currentScene++;
+      renderScene(currentScene);
+    }
+  });
+}
 
 // Scene 1: Bar chart of average MPG by origin (1970-1974)
 function renderScene1() {
@@ -419,13 +433,19 @@ function renderScene3() {
 
 // Tooltip functions
 function showTooltip(content) {
-  tooltip.style("opacity", 1)
-    .html(content)
-    .style("left", (d3.event.pageX + 10) + "px")
-    .style("top", (d3.event.pageY - 10) + "px");
+  if (tooltip) {
+    tooltip.style("opacity", 1)
+      .html(content)
+      .style("left", (d3.event.pageX + 10) + "px")
+      .style("top", (d3.event.pageY - 10) + "px");
+  }
 }
 
 function hideTooltip() {
-  tooltip.style("opacity", 0);
+  if (tooltip) {
+    tooltip.style("opacity", 0);
+  }
 }
+
+}); // End of DOMContentLoaded
 
