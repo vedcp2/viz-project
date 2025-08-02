@@ -33,7 +33,7 @@ function drawScene() {
 
   const ds = data.filter(d => {
     if(params.scene===2) return d.cylinders<=4 || d.weight<3000;
-    if(params.scene===3 && params.filterOrigin) return d.origin===params.filterOrigin;
+    if(params.scene===3 && params.filterOrigin) return d.origin==params.filterOrigin;
     return true;
   });
 
