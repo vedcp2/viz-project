@@ -1,118 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <script src="https://d3js.org/d3.v5.min.js"></script>
-</head>
-<body onload="init()">
-  <div id="controls"></div>
-  <div id="scene"></div>
+const url = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/mpg.csv";
+let data;
+let currentScene = 0;
 
-  <script>
-    let data;
-    let params = { scene: 1, filterOrigin: null };
+// Load CSV and preprocess
+d3.csv(url, d => ({
+  mpg: +d.mpg,
+  cylinders: +d.cylinders,
+  displacement: +d.displacement,
+  horsepower: +d.horsepower,
+  weight: +d.weight,
+  acceleration: +d.acceleration,
+  model_year: +d.model_year,
+  origin: d.origin,
+  name: d.name
+})).then(loaded => {
+  data = loaded;
+  renderScene(currentScene);
+});
 
-    function init() {
-      d3.csv("https://raw.githubusercontent.com/selva86/datasets/master/Auto.csv", d3.autoType)
-        .then(raw => {
-          // NOTE: If headers are quoted like "name", use d['"name"']
-          data = raw.filter(d => d["mpg"] && d.weight && d.cylinders && d["origin"]);
-          setupControls();
-          drawScene();
-        });
-    }
+// Scene rendering logic
+function renderScene(sceneIndex) {
+  d3.select("#vis").html(""); // Clear previous scene
 
-    function setupControls() {
-      const controls = d3.select("#controls")
-        .html("<button id='next'>Next</button><br>Origin filter: ")
-        .append("select")
-        .attr("id", "originSelector")
-        .on("change", () => {
-          params.filterOrigin = d3.select("#originSelector").property("value");
-          drawScene();
-        });
+  if (sceneIndex === 0) renderScene1();
+  else if (sceneIndex === 1) renderScene2();
+  else if (sceneIndex === 2) renderScene3();
 
-      d3.select("#next").on("click", () => {
-        params.scene = Math.min(params.scene + 1, 3);
-        drawScene();
-      });
-    }
+  document.getElementById("prevBtn").disabled = sceneIndex === 0;
+  document.getElementById("nextBtn").disabled = sceneIndex === 2;
+}
 
-    function drawScene() {
-      d3.select("#scene").html(""); // clear scene
-      const svg = d3.select("#scene")
-        .append("svg").attr("width", 500).attr("height", 400);
+document.getElementById("prevBtn").addEventListener("click", () => {
+  if (currentScene > 0) {
+    currentScene--;
+    renderScene(currentScene);
+  }
+});
 
-      const margin = { top: 40, left: 60, right: 20, bottom: 60 }, w = 400, h = 300;
-      const x = d3.scaleLinear().domain(d3.extent(data, d => d.weight)).range([0, w]);
-      const y = d3.scaleLinear().domain(d3.extent(data, d => d["mpg"])).range([h, 0]);
-
-      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-      const filteredData = data.filter(d => {
-        if (params.scene === 2) return d.cylinders <= 4 || d.weight < 3000;
-        if (params.scene === 3 && params.filterOrigin) return d["origin"] === params.filterOrigin;
-        return true;
-      });
-
-      g.selectAll("circle")
-        .data(filteredData).enter().append("circle")
-        .attr("cx", d => x(d.weight))
-        .attr("cy", d => y(d["mpg"]))
-        .attr("r", d => 2 + d.cylinders)
-        .attr("fill", d => {
-          if (params.scene === 2 && (d.cylinders <= 4 || d.weight < 3000)) return "orange";
-          return "steelblue";
-        })
-        .on("mouseover", (evt, d) => {
-          if (params.scene === 3) {
-            const tip = g.append("text")
-              .attr("id", "tt")
-              .attr("x", x(d.weight) + 10)
-              .attr("y", y(d["mpg"]) - 10)
-              .text(`${d['"name"']}: ${d["mpg"]} mpg`);
-          }
-        })
-        .on("mouseout", () => g.select("#tt").remove());
-
-      // Axes
-      g.append("g").call(d3.axisLeft(y));
-      g.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x));
-
-      // Titles
-      if (params.scene === 1) {
-        svg.append("text")
-          .attr("x", margin.left + 20).attr("y", margin.top - 10)
-          .text("All cars: poopy vs weight")
-          .attr("font-weight", "bold");
-      }
-      if (params.scene === 2) {
-        svg.append("text")
-          .attr("x", margin.left + 20).attr("y", margin.top - 10)
-          .text("Highlighted: ≤4 cylinders or <3000 lbs")
-          .attr("font-weight", "bold");
-      }
-      if (params.scene === 3) {
-        svg.append("text")
-          .attr("x", margin.left + 20).attr("y", margin.top - 10)
-          .text("Explore by Origin")
-          .attr("font-weight", "bold");
-
-        const selector = d3.select("#originSelector");
-
-        if (selector.selectAll("option").empty()) {
-          const origins = Array.from(new Set(data.map(d => d["origin"])));
-          selector.selectAll("option")
-            .data([""].concat(origins)).enter()
-            .append("option")
-            .attr("value", d => d)
-            .text(d => d || "All");
-        }
-
-        // Keep current selection
-        selector.property("value", params.filterOrigin || "");
-      }
-    }
-  </script>
-</body>
-</html>
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if (currentScene < 2) {
+    currentScene++;
+    renderScene(currentScene);
+  }
+});
