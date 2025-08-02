@@ -43,3 +43,75 @@ document.getElementById("nextBtn").addEventListener("click", () => {
     renderScene(currentScene);
   }
 });
+
+function renderScene1() {
+  const svg = d3.select("#vis")
+    .append("svg")
+    .attr("width", 700)
+    .attr("height", 500);
+
+  svg.append("text")
+    .attr("x", 350)
+    .attr("y", 30)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "20px")
+    .text("Average MPG by Car Origin (1970–1974)");
+
+  const filtered = data.filter(d => d.model_year >= 70 && d.model_year <= 74);
+
+  // Aggregate MPG by origin
+  const avgByOrigin = d3.rollup(
+    filtered,
+    v => d3.mean(v, d => d.mpg),
+    d => d.origin
+  );
+
+  const entries = Array.from(avgByOrigin, ([origin, mpg]) => ({ origin, mpg }));
+
+  const margin = { top: 60, right: 40, bottom: 40, left: 60 };
+  const width = 700 - margin.left - margin.right;
+  const height = 500 - margin.top - margin.bottom;
+
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleBand()
+    .domain(entries.map(d => d.origin))
+    .range([0, width])
+    .padding(0.3);
+
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(entries, d => d.mpg)])
+    .range([height, 0]);
+
+  // Axes
+  g.append("g")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(x));
+
+  g.append("g")
+    .call(d3.axisLeft(y));
+
+  // Bars
+  g.selectAll("rect")
+    .data(entries)
+    .enter()
+    .append("rect")
+    .attr("x", d => x(d.origin))
+    .attr("y", d => y(d.mpg))
+    .attr("width", x.bandwidth())
+    .attr("height", d => height - y(d.mpg))
+    .attr("fill", "steelblue");
+
+  // Annotation
+  g.selectAll("text.label")
+    .data(entries)
+    .enter()
+    .append("text")
+    .attr("class", "label")
+    .attr("x", d => x(d.origin) + x.bandwidth() / 2)
+    .attr("y", d => y(d.mpg) - 5)
+    .attr("text-anchor", "middle")
+    .text(d => d.mpg.toFixed(1));
+}
+
