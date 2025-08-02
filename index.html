@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Narrative Auto MPG Story</title>
+  <meta charset="UTF-8">
+  <title>MPG Narrative Visualization</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://d3js.org/d3.v5.min.js"></script>
 </head>
-<body onload="init()">
-  <h1>Fuel Efficiency in 1970s Cars</h1>
-  <div id="scene"></div>
-  <div id="controls"></div>
+<body>
+  <h1>How Car Efficiency Changed Over Time</h1>
+  <div id="vis"></div>
+  
+  <div class="nav-buttons">
+    <button id="prevBtn" disabled>Previous</button>
+    <button id="nextBtn">Next</button>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
