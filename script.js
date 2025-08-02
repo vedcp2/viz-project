@@ -47,6 +47,7 @@ function drawScene() {
       return "steelblue";
     })
     .on("mouseover", (evt,d)=>{
+      console.log(d);
       if(params.scene===3) {
         const tip = g.append("text")
           .attr("id","tt")
