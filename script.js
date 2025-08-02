@@ -11,7 +11,7 @@ const scenes = [
   },
   {
     title: "The Fuel Crisis Effect", 
-    annotation: "Notice the sharp rise in MPG starting around 1974"
+    annotation: "Notice the rise in MPG starting around 1974"
   },
   {
     title: "The Efficiency Leaders",
@@ -322,6 +322,12 @@ function renderScene2() {
 // Scene 3: Scatter plot with exploration
 function renderScene3() {
   console.log("Rendering Scene 3");
+  
+  // Get selected exploration option
+  const explorationMode = document.getElementById("groupBySelect").value;
+  
+  // Clear and create new SVG
+  d3.select("#vis").html("");
   const svg = d3.select("#vis")
     .append("svg")
     .attr("width", 800)
@@ -342,11 +348,36 @@ function renderScene3() {
     .attr("text-anchor", "middle")
     .text(scenes[2].title);
 
-  const filtered = data.filter(d => !isNaN(d.horsepower) && d.horsepower > 0);
+  const filtered = data.filter(d => !isNaN(d.horsepower) && d.horsepower > 0 && !isNaN(d.weight) && !isNaN(d.cylinders));
   console.log("Scene 3 filtered data:", filtered.length, "rows");
 
+  // Configure chart based on exploration mode
+  let xAccessor, xLabel, xDomain;
+  
+  switch(explorationMode) {
+    case 'horsepower':
+      xAccessor = d => d.horsepower;
+      xLabel = "Horsepower";
+      xDomain = [0, d3.max(filtered, d => d.horsepower) + 20];
+      break;
+    case 'weight':
+      xAccessor = d => d.weight;
+      xLabel = "Weight (lbs)";
+      xDomain = [d3.min(filtered, d => d.weight) - 100, d3.max(filtered, d => d.weight) + 100];
+      break;
+    case 'cylinders':
+      xAccessor = d => d.cylinders;
+      xLabel = "Number of Cylinders";
+      xDomain = [d3.min(filtered, d => d.cylinders) - 0.5, d3.max(filtered, d => d.cylinders) + 0.5];
+      break;
+    default:
+      xAccessor = d => d.horsepower;
+      xLabel = "Horsepower";
+      xDomain = [0, d3.max(filtered, d => d.horsepower) + 20];
+  }
+
   const x = d3.scaleLinear()
-    .domain([0, d3.max(filtered, d => d.horsepower) + 20])
+    .domain(xDomain)
     .range([0, width]);
 
   const y = d3.scaleLinear()
@@ -366,7 +397,7 @@ function renderScene3() {
     .attr("y", 40)
     .attr("class", "axis-label")
     .style("text-anchor", "middle")
-    .text("Horsepower");
+    .text(xLabel);
 
   g.append("g")
     .call(d3.axisLeft(y))
@@ -378,21 +409,14 @@ function renderScene3() {
     .style("text-anchor", "middle")
     .text("MPG");
 
-  // Scatter points
-  g.selectAll("circle")
-    .data(filtered)
-    .enter()
-    .append("circle")
-    .attr("class", "dot")
-    .attr("cx", d => x(d.horsepower))
-    .attr("cy", d => y(d.mpg))
-    .attr("r", 4)
-    .attr("fill", d => colorScale(d.origin))
-    .attr("opacity", 0.7)
-    .on("mouseover", function(d) {
-      showTooltip(`${d.name}<br/>MPG: ${d.mpg}<br/>HP: ${d.horsepower}<br/>Origin: ${d.origin}`);
-    })
-    .on("mouseout", hideTooltip);
+  // Create appropriate chart based on exploration mode
+  if (explorationMode === 'cylinders') {
+    // For cylinders, create a box plot or grouped scatter plot
+    renderCylindersChart(g, filtered, x, y, colorScale, width, height);
+  } else {
+    // For continuous variables (horsepower, weight), create scatter plot
+    renderScatterChart(g, filtered, x, y, xAccessor, colorScale);
+  }
 
   // Legend
   const legend = svg.append("g")
@@ -414,25 +438,121 @@ function renderScene3() {
       .text(origin.toUpperCase());
   });
 
-  // Annotation
+  // Dynamic annotation based on exploration mode
+  let annotationText;
+  switch(explorationMode) {
+    case 'horsepower':
+      annotationText = "Japanese imports balance performance and efficiency";
+      break;
+    case 'weight':
+      annotationText = "Lighter cars generally achieve better fuel economy";
+      break;
+    case 'cylinders':
+      annotationText = "Fewer cylinders typically mean better MPG";
+      break;
+    default:
+      annotationText = scenes[2].annotation;
+  }
+
   g.append("text")
     .attr("x", width / 2)
     .attr("y", -20)
     .attr("class", "scene-annotation")
-    .text(scenes[2].annotation);
-
-  // Handle exploration dropdown
-  const groupBy = document.getElementById("groupBySelect").value;
-  if (groupBy !== "origin") {
-    updateExploration(groupBy, g, width, height);
-  }
+    .text(annotationText);
 }
 
-// Exploration feature for Scene 3
-function updateExploration(groupBy, g, width, height) {
-  // This function can be extended to show different visualizations
-  // based on the selected groupBy option
-  console.log("Exploring by:", groupBy);
+// Helper function to render scatter plot for continuous variables
+function renderScatterChart(g, data, x, y, xAccessor, colorScale) {
+  g.selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("class", "dot")
+    .attr("cx", d => x(xAccessor(d)))
+    .attr("cy", d => y(d.mpg))
+    .attr("r", 4)
+    .attr("fill", d => colorScale(d.origin))
+    .attr("opacity", 0.7)
+    .on("mouseover", function(d) {
+      const xValue = xAccessor(d);
+      const xUnit = xAccessor === (d => d.weight) ? " lbs" : "";
+      showTooltip(`${d.name}<br/>MPG: ${d.mpg}<br/>Value: ${xValue}${xUnit}<br/>Origin: ${d.origin}`);
+    })
+    .on("mouseout", hideTooltip);
+}
+
+// Helper function to render cylinders chart (grouped by cylinder count)
+function renderCylindersChart(g, data, x, y, colorScale, width, height) {
+  // Group data by cylinders and create box plot-style visualization
+  const cylinderGroups = d3.nest()
+    .key(d => d.cylinders)
+    .entries(data);
+
+  cylinderGroups.forEach(group => {
+    const cylinderCount = +group.key;
+    const values = group.values;
+    
+    // Calculate statistics for this cylinder group
+    const mpgValues = values.map(d => d.mpg).sort(d3.ascending);
+    const q1 = d3.quantile(mpgValues, 0.25);
+    const median = d3.quantile(mpgValues, 0.5);
+    const q3 = d3.quantile(mpgValues, 0.75);
+    const min = d3.min(mpgValues);
+    const max = d3.max(mpgValues);
+
+    const xPos = x(cylinderCount);
+    const boxWidth = 40;
+
+    // Draw box plot
+    g.append("rect")
+      .attr("x", xPos - boxWidth/2)
+      .attr("y", y(q3))
+      .attr("width", boxWidth)
+      .attr("height", y(q1) - y(q3))
+      .attr("fill", "lightblue")
+      .attr("stroke", "steelblue")
+      .attr("opacity", 0.7);
+
+    // Median line
+    g.append("line")
+      .attr("x1", xPos - boxWidth/2)
+      .attr("x2", xPos + boxWidth/2)
+      .attr("y1", y(median))
+      .attr("y2", y(median))
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 2);
+
+    // Whiskers
+    g.append("line")
+      .attr("x1", xPos)
+      .attr("x2", xPos)
+      .attr("y1", y(q3))
+      .attr("y2", y(max))
+      .attr("stroke", "steelblue");
+
+    g.append("line")
+      .attr("x1", xPos)
+      .attr("x2", xPos)
+      .attr("y1", y(q1))
+      .attr("y2", y(min))
+      .attr("stroke", "steelblue");
+
+    // Individual points with jitter for better visibility
+    values.forEach((d, i) => {
+      const jitter = (Math.random() - 0.5) * 20; // Small random offset
+      g.append("circle")
+        .attr("cx", xPos + jitter)
+        .attr("cy", y(d.mpg))
+        .attr("r", 3)
+        .attr("fill", colorScale(d.origin))
+        .attr("opacity", 0.6)
+        .attr("class", "dot")
+        .on("mouseover", function() {
+          showTooltip(`${d.name}<br/>MPG: ${d.mpg}<br/>Cylinders: ${d.cylinders}<br/>Origin: ${d.origin}`);
+        })
+        .on("mouseout", hideTooltip);
+    });
+  });
 }
 
 // Tooltip functions
