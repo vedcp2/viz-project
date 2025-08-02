@@ -117,14 +117,13 @@ function renderScene1() {
   const filtered = data.filter(d => d.model_year >= 70 && d.model_year <= 74);
   console.log("Scene 1 filtered data:", filtered.length, "rows");
 
-  // Aggregate MPG by origin
-  const avgByOrigin = d3.rollup(
-    filtered,
-    v => d3.mean(v, d => d.mpg),
-    d => d.origin
-  );
+  // Aggregate MPG by origin using D3 v5 nest
+  const nested = d3.nest()
+    .key(d => d.origin)
+    .rollup(values => d3.mean(values, d => d.mpg))
+    .entries(filtered);
 
-  const entries = Array.from(avgByOrigin, ([origin, mpg]) => ({ origin, mpg }));
+  const entries = nested.map(d => ({ origin: d.key, mpg: d.value }));
   console.log("Scene 1 aggregated data:", entries);
 
   const x = d3.scaleBand()
@@ -225,15 +224,15 @@ function renderScene2() {
   const filtered = data.filter(d => d.model_year >= 70 && d.model_year <= 82);
   console.log("Scene 2 filtered data:", filtered.length, "rows");
   
-  const avgByYear = d3.rollup(
-    filtered,
-    v => d3.mean(v, d => d.mpg),
-    d => d.model_year
-  );
+  // Use D3 v5 nest instead of rollup
+  const nested = d3.nest()
+    .key(d => d.model_year)
+    .rollup(values => d3.mean(values, d => d.mpg))
+    .entries(filtered);
 
-  const lineData = Array.from(avgByYear, ([year, mpg]) => ({ 
-    year: year + 1900, 
-    mpg 
+  const lineData = nested.map(d => ({ 
+    year: +d.key + 1900, 
+    mpg: d.value 
   })).sort((a, b) => a.year - b.year);
   
   console.log("Scene 2 line data:", lineData);
