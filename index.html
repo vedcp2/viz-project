@@ -1,14 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Narrative Auto MPG Story</title>
+  <meta charset="utf-8">
+  <title>Fuel Efficiency 1970s</title>
   <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+    .scene { width: 600px; margin: auto; }
+    svg { border: 1px solid #ccc; background: #fafafa; }
+    .annotation { font-size: 14px; fill: #333; }
+    .tooltip { position:absolute; pointer-events:none;
+               background: white; border: 1px solid #ccc; padding: 6px; font-size:13px; }
+  </style>
 </head>
-<body onload="init()">
-  <h1>Fuel Efficiency in 1970s Cars</h1>
-  <div id="scene"></div>
-  <div id="controls"></div>
-  <script src="script.js"></script>
+<body>
+  <h1>Fuel Efficiency and Vehicle Size (1970s)</h1>
+  <div id="scene-container" class="scene"></div>
+  <script>
+    // Scenes and parameters
+    let currentScene = 0;
+    const scenes = [scene1, scene2, scene3];
+
+    async function init() {
+      const raw = await d3.csv("https://raw.githubusercontent.com/yourname/dataset/master/auto-mpg.csv", d3.autoType);
+      const data = raw.filter(d => d.mpg && d.weight && d.cylinders && d.origin);
+
+      // Tooltip div (hidden initially)
+      const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+      // Launch first scene
+      scenes[currentScene](data, tooltip);
+    }
+
+    function clearScene() {
+      d3.select("#scene-container").html("");
+    }
+
+    // Scene 1: All cars scatterplot
+    function scene1(data, tooltip) {
+      clearScene();
+      const container = d3.select("#scene-container").append("div");
+
+      container.append("p").text("Scene 1: All vehicles, MPG vs Weight");
+
+      const svg = container.append("svg").attr("width", 500).attr("height", 400);
+      const margin = {top: 40, right:40, bottom:50, left:60};
+      const width = +svg.attr("width") - margin.left - margin.right;
+      const height = +svg.attr("height") - margin.top - margin.bottom;
+
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain(d3.extent(data, d => d.weight)).nice().range([0, width]);
+      const y = d3.scaleLinear().domain(d3.extent(data, d => d.mpg)).nice().range([height, 0]);
+      const r = d => 2 + d.cylinders;
+
+      g.selectAll("circle").data(data).enter().append("circle")
+        .attr("cx", d => x(d.weight))
+        .attr("cy", d => y(d.mpg))
+        .attr("r", d => r(d))
+        .attr("fill", "steelblue")
+        .attr("opacity", 0.7)
+        .on("mouseover", d => {
+          tooltip.transition().duration(100).style("opacity",0.9);
+          tooltip.html(`Model: ${d.model}<br>MPG: ${d.mpg}<br>Weight: ${d.weight}`)
+            .style("left",(d3.event.pageX+10)+"px")
+            .style("top",(d3.event.pageY-28)+"px");
+        })
+        .on("mouseout", () => tooltip.transition().duration(200).style("opacity", 0));
+
+      g.append("g").call(d3.axisLeft(y));
+      g.append("g").call(d3.axisBottom(x)).attr("transform", `translate(0,${height})`);
+
+      g.append("text").attr("x", -margin.left+10).attr("y",-10)
+        .attr("class","annotation").text("Miles per Gallon");
+
+      g.append("text").attr("x", width/2).attr("y", height + margin.bottom -10)
+        .attr("text-anchor","middle").attr("class","annotation").text("Vehicle Weight");
+
+      container.append("button").text("Next ▶").on("click", () => { currentScene=1; scenes[1](data, tooltip); });
+    }
+
+    // Scene 2: Highlight small engine/light cars
+    function scene2(data, tooltip) {
+      clearScene();
+      const subset = data.filter(d => d.cylinders <=4 || d.weight < 3000);
+      const container = d3.select("#scene-container").append("div");
+      container.append("p").text("Scene 2: Small cars highlighted");
+
+      // copy chart code but color small subset distinctively...
+      // highlight logic: steelblue vs orange
+      // axes, annotations, "Next" to scene3 or "Back".
+
+      container.append("button").text("Next ▶").on("click", () => { currentScene=2; scenes[2](data, tooltip); });
+      container.append("button").text("◀ Back").on("click", () => { currentScene=0; scenes[0](data, tooltip); });
+    }
+
+    // Scene 3: Free-form exploration
+    function scene3(data, tooltip) {
+      clearScene();
+      const container = d3.select("#scene-container").append("div");
+      container.append("p").text("Scene 3: Explore by origin");
+
+      const origins = [...new Set(data.map(d=>d.origin))];
+      const select = container.append("select").on("change", function() {
+        drawExplore(data.filter(d=>d.origin===this.value), tooltip);
+      });
+      select.selectAll("option").data(["All"].concat(origins))
+        .enter().append("option").text(d=>d);
+
+      container.append("div").attr("id","explore");
+
+      drawExplore(data, tooltip);
+      container.append("button").text("◀ Back").on("click", () => { currentScene=1; scenes[1](data, tooltip); });
+    }
+
+    function drawExplore(data, tooltip) {
+      d3.select("#explore").html("");
+      // draw chart same as scene1 but dataset filtered
+    }
+
+    // Launch
+    init();
+  </script>
 </body>
 </html>
